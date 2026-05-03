@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wallet Will — onchain inheritance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="grain"></div>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-dot"></span>
+      <span class="brand-name">wallet.will</span>
+      <span class="brand-tag">v0.1 · base sepolia</span>
+    </div>
+    <nav class="nav">
+      <a href="#owner">register</a>
+      <a href="#status">status</a>
+      <a href="#keeper">keeper</a>
+      <a href="#demo">demo</a>
+    </nav>
+    <button id="connect" class="btn btn-primary">
+      <span class="dot"></span>
+      <span id="connect-label">connect wallet</span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="kicker">
+          <span class="kicker-dot"></span>
+          non-custodial · time-locked · agent-watched
+        </div>
+        <h1>
+          Your wallet,
+          <span class="serif">when you can't speak for it</span>.
+        </h1>
+        <p class="lede">
+          A heartbeat-driven inheritance vault. If you go silent past your timer,
+          a WillKeeper iNFT auto-sweeps your assets through Uniswap into USDC and
+          distributes them to ENS-named beneficiaries — with a challenge window
+          for false alarms.
+        </p>
+        <div class="hero-stats">
+          <div class="stat"><div class="stat-num" id="hero-state">—</div><div class="stat-label">will state</div></div>
+          <div class="stat"><div class="stat-num" id="hero-eta">—</div><div class="stat-label">next event</div></div>
+          <div class="stat"><div class="stat-num" id="hero-alert">—</div><div class="stat-label">keeper alertness</div></div>
+          <div class="stat"><div class="stat-num" id="hero-bens">—</div><div class="stat-label">beneficiaries</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="owner" class="card card-glass">
+      <div class="card-head">
+        <h2>register a will</h2>
+        <span class="card-sub">spawns a Will contract + mints a WillKeeper iNFT</span>
+      </div>
+      <form id="register-form" class="form-grid">
+        <label>
+          <span>your ENS</span>
+          <input id="ownerEns" placeholder="eddy.eth" autocomplete="off" />
+        </label>
+        <label>
+          <span>inactivity period (seconds)</span>
+          <input id="inactivity" type="number" value="300" min="60" />
+        </label>
+        <label>
+          <span>challenge window (seconds)</span>
+          <input id="challenge" type="number" value="120" min="30" />
+        </label>
+        <label class="full">
+          <span>watched tokens (comma-separated, must include USDC)</span>
+          <input id="watched" placeholder="0x036C... ,0x..." />
+        </label>
+        <div class="full bens-block">
+          <div class="bens-head">
+            <span>beneficiaries</span>
+            <button type="button" id="add-ben" class="btn btn-ghost">+ add row</button>
+          </div>
+          <div id="ben-rows"></div>
+        </div>
+        <label class="full">
+          <span>passphrase to encrypt the will document</span>
+          <input id="passphrase" type="password" placeholder="something only you know" />
+        </label>
+        <div class="full actions-row">
+          <button type="submit" class="btn btn-primary">register will</button>
+          <span class="hint">v1 escrows the key — v2 splits it via Shamir across beneficiaries.</span>
+        </div>
+      </form>
+    </section>
+
+    <section id="status" class="card card-glass">
+      <div class="card-head">
+        <h2>live status</h2>
+        <span class="card-sub" id="will-addr-label">no will loaded</span>
+      </div>
+      <div class="status-grid">
+        <div class="status-tile">
+          <div class="tile-label">state</div>
+          <div class="tile-value" id="ui-state">—</div>
+          <div class="state-track">
+            <span data-state="Active">active</span>
+            <span data-state="Triggered">triggered</span>
+            <span data-state="Cancelled">cancelled</span>
+            <span data-state="Executed">executed</span>
+          </div>
+        </div>
+        <div class="status-tile">
+          <div class="tile-label">last heartbeat</div>
+          <div class="tile-value mono" id="ui-heartbeat">—</div>
+          <button id="heartbeat-btn" class="btn btn-primary">ping heartbeat</button>
+        </div>
+        <div class="status-tile countdown-tile">
+          <div class="tile-label" id="countdown-label">trigger in</div>
+          <div class="tile-value mono countdown" id="ui-countdown">—</div>
+          <div class="progress"><div class="progress-bar" id="ui-progress"></div></div>
+        </div>
+        <div class="status-tile">
+          <div class="tile-label">beneficiaries</div>
+          <ul class="ben-list" id="ui-bens"><li class="muted">—</li></ul>
+        </div>
+        <div class="status-tile">
+          <div class="tile-label">watched balances</div>
+          <ul class="ben-list" id="ui-balances"><li class="muted">—</li></ul>
+        </div>
+        <div class="status-tile">
+          <div class="tile-label">danger zone</div>
+          <div class="danger-actions">
+            <button id="cancel-btn" class="btn btn-secondary">cancel trigger</button>
+            <button id="trigger-btn" class="btn btn-secondary">force-trigger</button>
+            <button id="execute-btn" class="btn btn-danger">execute</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="keeper" class="card card-glass">
+      <div class="card-head">
+        <h2>willkeeper agent</h2>
+        <span class="card-sub">erc-7857 inft · memory persisted on 0g storage</span>
+      </div>
+      <div class="keeper-grid">
+        <div class="keeper-card">
+          <div class="keeper-id" id="keeper-id">#—</div>
+          <div class="keeper-meta">
+            <div><span>ens subname</span><b id="keeper-ens">—</b></div>
+            <div><span>memory uri</span><b class="mono trunc" id="keeper-uri">—</b></div>
+            <div><span>alertness</span><b id="keeper-alert">—</b></div>
+            <div><span>actions fired</span><b id="keeper-actions">—</b></div>
+          </div>
+        </div>
+        <div class="keeper-log">
+          <div class="log-head">recent agent actions</div>
+          <ul id="agent-log"><li class="muted">awaiting events…</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="card card-glass">
+      <div class="card-head">
+        <h2>demo controls</h2>
+        <span class="card-sub">accelerated time for the live walkthrough</span>
+      </div>
+      <div class="demo-row">
+        <button id="fund-btn" class="btn btn-secondary">fund will (mock USDC)</button>
+        <button id="skip-btn" class="btn btn-secondary">skip 3 minutes (anvil only)</button>
+        <button id="refresh-btn" class="btn btn-ghost">refresh</button>
+      </div>
+      <pre id="console" class="console-box">// console output</pre>
+    </section>
+
+    <footer class="foot">
+      <span>built at ethglobal · 2026</span>
+      <span class="dotsep">·</span>
+      <a href="https://github.com/adielliot37/ethglobal-openagents" target="_blank" rel="noreferrer">github</a>
+      <span class="dotsep">·</span>
+      <span>uniswap · ens · 0g · keeperhub</span>
+    </footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
