@@ -1,0 +1,32 @@
+# Foundry
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+contracts/lib/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Env
+.env
+.env.local
+.env.*.local
+*.key
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Node
+node_modules/
+package-lock.json
+
+# Agent state (local cache)
+agent/.state/
+agent/memory_cache/
+*.log
